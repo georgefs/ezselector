@@ -25,5 +25,5 @@ app = webapp2.WSGIApplication([
     (r'/logout', 'views.Logout'),
     (r'/preview', 'views.Preview'),
     (r'/message', 'views.Message'),
-    (r'/image', 'views.ImageHandler'),
+    (r'/image/(\d+)', 'views.ImageHandler'),
 ], debug=True, config=config)

@@ -75,12 +75,13 @@ class JsonHandler(webapp2.RequestHandler):
             # compressed
             data = json.dumps(data, separators=(',', ':'), default=extend_json)
 
-        referer = self.request.headers.get('Referer')
-        if referer:
-            urlinfo = urlparse.urlparse(referer)
-            if urlinfo.netloc.endswith('tagtooadex2.appspot.com') or urlinfo.netloc.startswith('localhost'):
-                self.response.headers.update({'Access-Control-Allow-Origin': urlinfo.scheme+"://"+urlinfo.netloc})
+#        referer = self.request.headers.get('Referer')
+#        if referer:
+#            urlinfo = urlparse.urlparse(referer)
+#            if urlinfo.netloc.endswith('tagtooadex2.appspot.com') or urlinfo.netloc.startswith('localhost'):
+#                self.response.headers.update({'Access-Control-Allow-Origin': "*"})
 
+        self.response.headers.update({'Access-Control-Allow-Origin': "*"})
         self.response.content_type="application/json"
         if callback:
             self.response.out.write("%s(%s);" % (callback, data))

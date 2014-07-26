@@ -91,7 +91,7 @@ class Detail(JsonHandler):
 
 
 class Login(JsonHandler):
-    def get(self):
+    def post(self):
         email = self.request.get('email')
         password = self.request.get('password')
 
@@ -242,19 +242,27 @@ class Preview(webapp2.RequestHandler):
             <div>
                 <h2>{0}{1.name}</h2>
                 <ul>{2}</ul>
+                <a href="/store/{}?action">
             </div>
         
         '''
 
         img_template = u'''
-            <li><img src="{}"></li>
+            <li>
+                <img src="{1}">
+                <a href="/images/{0}?action=delete" target="_blank" >刪除圖片</a>
+                <a href="/images/{0}?action=set&tag=Parity" target="_blank" >平價</a>
+                <a href="/images/{0}?action=set&tag=Meals" target="_blank" >簡餐</a>
+                <a href="/images/{0}?action=set&tag=Restaurant" target="_blank" >餐廳</a>
+                <a href="/images/{0}?action=set&tag=Space" target="_blank" >空間</a>
+            </li>
         '''
         stores = []
         for s in ss:
             imgs = []
             for img in s.imgs:
                 try:
-                    imgs.append(img_template.format(img.image))
+                    imgs.append(img_template.format(img.key.id(), img.cached_property))
                 except Exception as e:
                     import pdb;pdb.set_trace()
             imgs = "\n".join(imgs)
@@ -269,8 +277,8 @@ class Preview(webapp2.RequestHandler):
 
 
 class ImageHandler(webapp2.RequestHandler):
-    def get(self):
-        _id = self.request.get('_id')
+    def get(self, _id):
+        _id = int(_id)
         img = Image.get_by_id(int(_id))
         img.delete()
 
