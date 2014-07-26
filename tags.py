@@ -23,9 +23,9 @@ def SetTag(obj):
             resp = requests.post(api, data)
             dicData = json.loads(resp.content)
             if 'result' in dicData:
-                for i in dicData['result']:
-                    print "insert tag = " , i['category']
-                    tag = i['category']
+                for j in dicData['result']:
+                    print "insert tag = " , j['category']
+                    tag = j['category']
                     obj.tags.append(tag)
                     set(obj.tags)
                     obj.put()
@@ -67,4 +67,39 @@ def test():
         for i in dicData['result']:
             i
         print dicData['result']
+
+def GetDes(obj):
+    import requests, urllib, json
+    from models import Store
+    auth_info = {}
+    auth_info['id'] = 'b5553f8dcedf9a1714aba4a7a9587411'  ##  api id
+    auth_info['secret_key'] = '42f4f8c9e60147aa3358f1346cca1f13'  ##   api key
      
+    resp = requests.post('http://api.ser.ideas.iii.org.tw/api/user/get_token', auth_info)
+     
+    token = json.loads(resp.content)['result']['token']
+     
+    api = 'http://api.ser.ideas.iii.org.tw:80/api/keyword_search/ptt/title'
+    data = {}
+    data['token']=token
+    data['keyword'] = obj.name
+    resp = requests.post(api, data)
+
+    dicData = json.loads(resp.content)
+    if 'result' in dicData:
+        url = dicData['result'][0][0]['url']
+        print dicData['result'][0][0]['url']
+        resp = requests.get(url, verify =False)
+        print resp.content
+        obj.description = context
+        obj.put()
+    else:
+        print "no results"
+def SetDes():
+    import requests, urllib, json
+    from models import Store
+    query = Store.query().fetch(1000)
+    for obj in query:
+        GetDag(obj)
+
+
