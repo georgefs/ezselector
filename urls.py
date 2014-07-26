@@ -23,4 +23,7 @@ app = webapp2.WSGIApplication([
     (r'/post/list', 'views.Post'),
     (r'/post/(\w+)', 'views.Post'),
     (r'/logout', 'views.Logout'),
+    (r'/preview', 'views.Preview'),
+    (r'/message', 'views.Message'),
+    (r'/image', 'views.ImageHandler'),
 ], debug=True, config=config)

@@ -84,6 +84,7 @@ class Post(ndb.Model):
     image = ndb.BlobKeyProperty(indexed=False)
     point = ndb.GeoPtProperty()
     msgs = ndb.StructuredProperty(Message, repeated=True)
+    share = ndb.BooleanProperty(default=False)
     
     messages = ndb.StructuredProperty(Message, repeated=True)
     updated = ndb.DateTimeProperty()

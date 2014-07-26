@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
 from handlers import JsonHandler
+import webapp2
 from google.appengine.api import images
 from webapp2_extras import sessions
 import json
 import csv
 import copy
-from models import data, in_bound, to_point, User, Message, Post
+from models import data, in_bound, to_point, User, Message, Post, Store, Image
 import random
 import logging
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.datastore.datastore_query import Cursor
 static_map = "http://maps.googleapis.com/maps/api/staticmap?center={0},{1}&zoom=17&size=200x200&markers=color:red%7Ccolor:red%7Clabel:A%7C{0},{1}"
 
 
@@ -140,7 +143,6 @@ class SignupForm(JsonHandler):
                     </form>
                 </body>
             </html>
-
         '''
         upload_url = blobstore.create_upload_url('/signup')
         self.response.out.write(template.format(upload_url))
@@ -157,10 +159,12 @@ class PostForm(JsonHandler):
                     </form>
                 </body>
             </html>
-
         '''
         upload_url = blobstore.create_upload_url('/post')
         self.response.out.write(template.format(upload_url))
+
+    def post(self):
+        return self.response.out.write(blobstore.create_upload_url('/post'))
 
 
 class Post(JsonHandler):
@@ -170,7 +174,7 @@ class Post(JsonHandler):
         cursor = self.request.get('cursor') or None
 
         if not _id:
-            posts, next_curs, more = Post.query().fetch_page(size, start_cursor=cursor)
+            posts, next_curs, more = Post.query(share=True).fetch_page(size, start_cursor=cursor)
         elif _id == 'me':
             posts, next_curs, more = Post.query(author=User.get_by_id(self.session['user'].email)).fetch_page(size, start_cursor=cursor)
         else:
@@ -189,6 +193,7 @@ class Post(JsonHandler):
         assert author
         post.commit = self.request.get('commit')
         post.image = self.get_uploads('image')[0].key()
+        post.share = bool(self.get('share', False))
         post.put()
         
         self.JsonResponse({"STATUS": "SUCCESS"})
@@ -208,3 +213,66 @@ class Message(JsonHandler):
         msg.put()
         post.msgs.append(msg)
         post.put()
+
+
+
+
+class Preview(webapp2.RequestHandler):
+    def get(self):
+        cursor = self.request.get('cursor', "")
+        page = self.request.get_range('page')
+        
+        if cursor:
+            cursor = Cursor(urlsafe=cursor)
+            ss, next_curs, more = Store.query().fetch_page(100, start_cursor=cursor)
+        else:
+            ss, next_curs, more = Store.query().fetch_page(100)
+
+        base_template = u'''
+            <div>
+                {}
+            </div>
+            <form>
+                <input name='cursor' value='{}'>
+                <input type='submit' value="下一頁">
+            </form>
+        '''
+
+        store_template = u'''
+            <div>
+                <h2>{0}{1.name}</h2>
+                <ul>{2}</ul>
+            </div>
+        
+        '''
+
+        img_template = u'''
+            <li><img src="{}"></li>
+        '''
+        stores = []
+        for s in ss:
+            imgs = []
+            for img in s.imgs:
+                try:
+                    imgs.append(img_template.format(img.image))
+                except Exception as e:
+                    import pdb;pdb.set_trace()
+            imgs = "\n".join(imgs)
+            try:
+                stores.append(store_template.format(s.key.id(), s, imgs))
+            except Exception as e:
+                import pdb;pdb.set_trace()
+        html = base_template.format("\n".join(stores), next_curs.urlsafe())
+        self.response.out.write(html)
+
+
+
+
+class ImageHandler(webapp2.RequestHandler):
+    def get(self):
+        _id = self.request.get('_id')
+        img = Image.get_by_id(int(_id))
+        img.delete()
+
+
+
