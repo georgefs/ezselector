@@ -258,7 +258,7 @@ class Preview(webapp2.RequestHandler):
                 <a href="/images/{0}?action=set&tag=Meals&{2}" target="_blank" >簡餐</a>
                 <a href="/images/{0}?action=set&tag=Restaurant&{2}" target="_blank" >餐廳</a>
                 <a href="/images/{0}?action=set&tag=Space&{2}" target="_blank" >空間</a>
-                <a href="/images/{0}?action=set&tag=drink&{2}" target="_blank" >空間</a>
+                <a href="/images/{0}?action=set&tag=drink&{2}" target="_blank" >飲料</a>
                 <div>{3}</div>
             </li>
         '''
