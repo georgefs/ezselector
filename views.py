@@ -104,7 +104,6 @@ class Login(JsonHandler):
             
 class Logout(JsonHandler):
     def get(self):
-        import pdb;pdb.set_trace()
         self.session['user'] = None
 
 
