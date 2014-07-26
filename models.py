@@ -51,6 +51,7 @@ class Store(ndb.Model):
     address = ndb.StringProperty(indexed=False)
     reference = ndb.StringProperty()
     imgs = ndb.StructuredProperty(Image, repeated=True)
+    description = ndb.StringProperty(indexed=False, repeated=False)
 
 
 class User(ndb.Model):
