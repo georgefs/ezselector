@@ -13,6 +13,7 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.datastore.datastore_query import Cursor
 static_map = "http://maps.googleapis.com/maps/api/staticmap?center={0},{1}&zoom=17&size=200x200&markers=color:red%7Ccolor:red%7Clabel:A%7C{0},{1}"
+import urllib
 
 
 
@@ -115,7 +116,8 @@ class Signup(blobstore_handlers.BlobstoreUploadHandler, JsonHandler):
         name = self.request.get('name')
         email = self.request.get('email')
         password = self.request.get('password')
-        mug_shot = self.get_uploads('mug_shot')[0].key()
+        mug_shot = self.get_uploads('mug_shot')
+        mug_shot = mug_shot and mug_shot[0].key()
         if User.get_by_id(email):
             self.JsonResponse({"STATUS": "ERROR", "MSG":"EMAIL REPEAT"})
             return            
@@ -124,7 +126,8 @@ class Signup(blobstore_handlers.BlobstoreUploadHandler, JsonHandler):
         user.name = name
         user.email = email
         user.password = password
-        user.mug_shot = mug_shot
+        if mug_shot:
+            user.mug_shot = mug_shot
         user.put()
         self.JsonResponse({"STATUS": "SUCCESS"})
 
@@ -241,8 +244,8 @@ class Preview(webapp2.RequestHandler):
         store_template = u'''
             <div>
                 <h2>{0}{1.name}</h2>
+                <a href="/store/{0}?action=delete"  target="_blank">刪除store</a>
                 <ul>{2}</ul>
-                <a href="/store/{}?action">
             </div>
         
         '''
@@ -250,11 +253,13 @@ class Preview(webapp2.RequestHandler):
         img_template = u'''
             <li>
                 <img src="{1}">
-                <a href="/images/{0}?action=delete" target="_blank" >刪除圖片</a>
-                <a href="/images/{0}?action=set&tag=Parity" target="_blank" >平價</a>
-                <a href="/images/{0}?action=set&tag=Meals" target="_blank" >簡餐</a>
-                <a href="/images/{0}?action=set&tag=Restaurant" target="_blank" >餐廳</a>
-                <a href="/images/{0}?action=set&tag=Space" target="_blank" >空間</a>
+                <a href="/images/{0}?action=delete&{2}" target="_blank" >刪除圖片</a>
+                <a href="/images/{0}?action=set&tag=Parity&{2}" target="_blank" >平價</a>
+                <a href="/images/{0}?action=set&tag=Meals&{2}" target="_blank" >簡餐</a>
+                <a href="/images/{0}?action=set&tag=Restaurant&{2}" target="_blank" >餐廳</a>
+                <a href="/images/{0}?action=set&tag=Space&{2}" target="_blank" >空間</a>
+                <a href="/images/{0}?action=set&tag=drink&{2}" target="_blank" >空間</a>
+                <div>{3}</div>
             </li>
         '''
         stores = []
@@ -262,14 +267,16 @@ class Preview(webapp2.RequestHandler):
             imgs = []
             for img in s.imgs:
                 try:
-                    imgs.append(img_template.format(img.key.id(), img.cached_property))
+                    code = urllib.urlencode({'url':img.image})
+                    imgs.append(img_template.format(s.key.id(), img.image, code, img.tag))
                 except Exception as e:
-                    import pdb;pdb.set_trace()
+                    pass
+
             imgs = "\n".join(imgs)
             try:
                 stores.append(store_template.format(s.key.id(), s, imgs))
             except Exception as e:
-                import pdb;pdb.set_trace()
+                print e
         html = base_template.format("\n".join(stores), next_curs.urlsafe())
         self.response.out.write(html)
 
@@ -279,8 +286,54 @@ class Preview(webapp2.RequestHandler):
 class ImageHandler(webapp2.RequestHandler):
     def get(self, _id):
         _id = int(_id)
-        img = Image.get_by_id(int(_id))
-        img.delete()
+        action = self.request.get('action')
+        
+
+        url = self.request.get('url')
+        s = Store.get_by_id(int(_id))
+        imgs = s.imgs
 
 
+        f = True
+        tmp = []
+        if action == 'delete':
+
+            for img in imgs:
+                if f and img.image == url:
+                    f = False
+                else:
+                    tmp.append(img)
+
+            s.imgs = tmp
+            s.put()
+
+
+        tag = self.request.get('tag')
+        if action == 'set':
+            for img in imgs:
+                if img.image == url:
+                    img.tag = tag
+                tmp.append(img)
+
+            s.imgs = tmp
+            s.put()
+        html = '''
+        <script>
+        window.close();
+        </script>
+        '''
+        self.response.out.write(html)
+
+
+class StoreHandler(webapp2.RequestHandler):
+    def get(self, _id):
+        store = Store.get_by_id(int(_id))       
+        store.key.delete()
+
+        html = '''
+        <script>
+        window.close();
+        </script>
+        '''
+        self.response.out.write(html)
 

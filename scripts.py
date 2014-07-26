@@ -5,7 +5,7 @@ from google.appengine.ext import db
 import re
 
 def upload():
-    with open('ezchoice.csv') as f:
+    with open('data.csv') as f:
         reader = csv.DictReader(f)
         for row in reader:
             try:

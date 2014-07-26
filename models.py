@@ -39,7 +39,9 @@ class Image(ndb.Model):
     cached_image = ndb.StringProperty(indexed=False)
     
     def create_cache(self):
-        pass
+        from share_libs.serve import cache_image
+        self.cached_image = cache_image(self.image).replace('localhost', '192.168.33.15')
+        self.put()
 
 
 class Store(ndb.Model):
